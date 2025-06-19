@@ -24,16 +24,15 @@ void Nco_tick(Nco self);
 /**
  * @brief Obtiene la parte real de la muestra actual
  * @param self El oscilador
- * @return int32_t Parte real actual
+ * @return int16_t Parte real actual
  */
-int32_t Nco_getReal(Nco self);
+int16_t Nco_getReal(Nco self);
 
 /**
  * @brief Obtiene la parte imaginaria de la muestra actual
  * @param self El oscilador
- * @return int32_t Parte imaginaria
+ * @return int16_t Parte imaginaria
  */
-int32_t Nco_getImag(Nco self);
+int16_t Nco_getImag(Nco self);
 
 #endif // NCO_H
-

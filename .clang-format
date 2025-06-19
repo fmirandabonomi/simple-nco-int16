@@ -20,4 +20,3 @@ AlignOperands: Align
 BreakBeforeBinaryOperators : NonAssignment
 AlignArrayOfStructures: Right
 SortIncludes: CaseInsensitive
-InsertNewlineAtEOF: true
