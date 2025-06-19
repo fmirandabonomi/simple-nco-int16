@@ -1,33 +1,58 @@
-#include "nco.h"
+/**********************************************************************************************************************
+Copyright (c) 2025, Fernando Alberto Miranda Bonomi <fmirandabonomi@herrera.unt.edu.ar>
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
+documentation files (the “Software”), to deal in the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+persons to whom the Software is furnished to do so, subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the
+Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+SPDX-License-Identifier: MIT
+**********************************************************************************************************************/
+
+/// @addtogroup Nco
+/// @{
+
+#include "nco.h"
+#include <math.h>
 #include <stdlib.h>
 
+/// @brief Constante pi, relación del perímetro de una circunferencia a su diámetro
+#define PI 3.14159265358979323846
+
+/// @brief Estado del oscilador numerico
 struct Nco_s {
-    int16_t real;
-    int16_t imag;
+    int32_t bReal; ///< Parte real de exp(-2*j*pi*fs/fc)
+    int32_t bImag; ///< Parte imag de exp(-2*j*pi*fs/fc)
+    int16_t real;  ///< Parte real de la muestra actual
+    int16_t imag;  ///< Parte imaginaria de la muestra actual
 };
 
-// fs = 3e6/17
-// fc = 30e3
-// fc/fs = 17e-2
-// wc=2*\pi*0.17
-//
-// round(2**16 * exp(-jwc)) -> 31562 -j57430
-
-static const int32_t bReal = 31572L;
-static const int32_t bImag = -57429L;
-
-Nco Nco_create(void)
+Nco Nco_create(double fc, double fs)
 {
+    if (!fs) return NULL;
     Nco inst = malloc(sizeof(*inst));
-    if (inst) *inst = (struct Nco_s){.real = INT16_MAX};
+    if (inst)
+        *inst = (struct Nco_s){.real  = INT16_MAX,
+                               .bReal = (int32_t)(0x10000 * cos(2 * PI * fs / fc)),
+                               .bImag = (int32_t)(-0x10000 * sin(2 * PI * fs / fc))};
     return inst;
+}
+void Nco_delete(Nco self)
+{
+    if (self) free(self);
 }
 void Nco_tick(Nco self)
 {
     int32_t auxReal, auxImag;
-    auxReal = ((bReal * self->real) >> 16) - ((bImag * self->imag) >> 16);
-    auxImag = ((bReal * self->imag) >> 16) + ((bImag * self->real) >> 16);
+    auxReal = ((self->bReal * self->real) >> 16) - ((self->bImag * self->imag) >> 16);
+    auxImag = ((self->bReal * self->imag) >> 16) + ((self->bImag * self->real) >> 16);
     if (!auxImag) auxReal = auxReal >= 0 ? INT16_MAX : -INT16_MAX;
     else if (!auxReal) auxImag = auxImag >= 0 ? INT16_MAX : -INT16_MAX;
     self->real = (int16_t)auxReal;
@@ -41,3 +66,4 @@ int16_t Nco_getImag(Nco self)
 {
     return self->imag;
 }
+/// @}

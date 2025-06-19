@@ -7,6 +7,7 @@ INC_DIR=inc
 BUILD_DIR=build
 BIN_DIR=$(BUILD_DIR)/bin
 OBJ_DIR=$(BUILD_DIR)/obj
+DOC_DIR=$(BUILD_DIR)/doc
 PROG_NAME=nco
 
 SRC_FILES=$(wildcard $(SRC_DIR)/*.c)
@@ -20,13 +21,13 @@ all: $(PROG);
 $(PROG): $(OBJ_FILES) | $(BIN_DIR)
 	$(LD) -o $(PROG) $(OBJ_FILES)
 
+doc: |$(DOC_DIR)
+	doxygen doxyfile
+
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(foreach d,$(INC_DIR),-I$(d)) -MMD -c -o $@ $<
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
-
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+$(OBJ_DIR) $(BIN_DIR) $(DOC_DIR):
+	-@mkdir -p $@
 
 -include $(DEP_FILES)
