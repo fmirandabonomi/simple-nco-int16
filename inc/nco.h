@@ -44,14 +44,21 @@ SPDX-License-Identifier: MIT
  */
 typedef struct Nco_s *Nco;
 
+typedef struct ComplexSample_s ComplexSample;
+
+struct ComplexSample_s {
+    int16_t real;
+    int16_t imag;
+};
+
 /**
  * @brief Crea un oscilador de control numérico
- * @param fc frecuencia a generar
- * @param fs frecuencia de muestreo, fc >= 2*fs para evitar alias
+ * @param outFreq frecuencia a generar
+ * @param sampFreq frecuencia de muestreo, fc >= 2*fs para evitar alias
  * @retval Nco El oscilador
  * @retval NULL Si no pudo crearlo
  */
-Nco Nco_create(double fc, double fs);
+Nco Nco_create(double outFreq, double sampFreq);
 
 /**
  * @brief Destruye un oscilador de control numérico, liberando los recursos asociados
@@ -79,6 +86,14 @@ int16_t Nco_getReal(Nco self);
  * @return int16_t Parte imaginaria
  */
 int16_t Nco_getImag(Nco self);
+
+/**
+ * @brief Llena buffers con muestras reales e imaginarias
+ * @param self El Nco
+ * @param dest Destino
+ * @param numSamples Cantidad de muestras a generar
+ */
+void Nco_getSamples(Nco self, ComplexSample *dest, size_t numSamples);
 
 /// @}
 

@@ -16,19 +16,32 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 **********************************************************************************************************************/
 
-#include <stdio.h>
-
 #include "nco.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#define NSAMPLES 10000
-
-int main(void)
+int main(int argc, char **argv)
 {
-    Nco nco = Nco_create(3000, 30 * 17);
-    for (int i = 0; i < NSAMPLES; ++i) {
-        printf("%hd\t%hd\n", Nco_getReal(nco), Nco_getImag(nco));
-        Nco_tick(nco);
+    enum { DEFAULT_SAMPLES = 10 };
+    if (argc == 2 && !strcmp("getSamples", argv[1])) {
+        Nco nco = Nco_create(1, DEFAULT_SAMPLES);
+        ComplexSample buf[DEFAULT_SAMPLES];
+        Nco_getSamples(nco, buf, DEFAULT_SAMPLES);
+        for (int i = 0; i < DEFAULT_SAMPLES; ++i)
+            printf("%hd\t%hd\n", buf[i].real, buf[i].imag);
+    } else {
+        int nsamp = DEFAULT_SAMPLES;
+        if (argc == 2) {
+            int x = atoi(argv[1]);
+            if (x > 0) nsamp = x;
+        }
+        Nco nco = Nco_create(30 * 17, 3000);
+        for (int i = 0; i < nsamp; ++i) {
+            printf("%hd\t%hd\n", Nco_getReal(nco), Nco_getImag(nco));
+            Nco_tick(nco);
+        }
     }
     return 0;
 }
-

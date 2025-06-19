@@ -21,10 +21,15 @@ SPDX-License-Identifier: MIT
 
 #include "nco.h"
 #include <math.h>
+#include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 /// @brief Constante pi, relación del perímetro de una circunferencia a su diámetro
 #define PI 3.14159265358979323846
+
+/// @breif Amplitud máxima
+#define AMPLITUDE INT16_MAX
 
 /// @brief Estado del oscilador numerico
 struct Nco_s {
@@ -34,14 +39,14 @@ struct Nco_s {
     int16_t imag;  ///< Parte imaginaria de la muestra actual
 };
 
-Nco Nco_create(double fc, double fs)
+Nco Nco_create(double outFreq, double sampFreq)
 {
-    if (!fs) return NULL;
+    if (!sampFreq) return NULL;
     Nco inst = malloc(sizeof(*inst));
     if (inst)
-        *inst = (struct Nco_s){.real  = INT16_MAX,
-                               .bReal = (int32_t)(0x10000 * cos(2 * PI * fs / fc)),
-                               .bImag = (int32_t)(-0x10000 * sin(2 * PI * fs / fc))};
+        *inst = (struct Nco_s){.real  = AMPLITUDE,
+                               .bReal = (int32_t)((1 << 15) * cos(-2 * PI * outFreq / sampFreq)),
+                               .bImag = (int32_t)((1 << 15) * sin(-2 * PI * outFreq / sampFreq))};
     return inst;
 }
 void Nco_delete(Nco self)
@@ -51,10 +56,16 @@ void Nco_delete(Nco self)
 void Nco_tick(Nco self)
 {
     int32_t auxReal, auxImag;
-    auxReal = ((self->bReal * self->real) >> 16) - ((self->bImag * self->imag) >> 16);
-    auxImag = ((self->bReal * self->imag) >> 16) + ((self->bImag * self->real) >> 16);
-    if (!auxImag) auxReal = auxReal >= 0 ? INT16_MAX : -INT16_MAX;
-    else if (!auxReal) auxImag = auxImag >= 0 ? INT16_MAX : -INT16_MAX;
+    auxReal = ((self->bReal * (int32_t)self->real) >> 15) - ((self->bImag * (int32_t)self->imag) >> 15);
+    auxImag = ((self->bReal * (int32_t)self->imag) >> 15) + ((self->bImag * (int32_t)self->real) >> 15);
+    if ((auxImag > -8 && auxImag < 8) || auxReal >= AMPLITUDE || auxReal <= -AMPLITUDE) {
+        auxReal = auxReal >= 0 ? AMPLITUDE : -AMPLITUDE;
+        auxImag = 0;
+    }
+    if ((auxReal > -8 && auxReal < 8) || auxImag >= AMPLITUDE || auxImag <= -AMPLITUDE) {
+        auxImag = auxImag >= 0 ? AMPLITUDE : -AMPLITUDE;
+        auxReal = 0;
+    }
     self->real = (int16_t)auxReal;
     self->imag = (int16_t)auxImag;
 }
@@ -65,5 +76,15 @@ int16_t Nco_getReal(Nco self)
 int16_t Nco_getImag(Nco self)
 {
     return self->imag;
+}
+
+void Nco_getSamples(Nco self, ComplexSample *dest, size_t numSamples)
+{
+    if (!dest) return;
+    for (size_t i = 0; i < numSamples; ++i) {
+        dest[i].real = self->real;
+        dest[i].imag = self->imag;
+        Nco_tick(self);
+    }
 }
 /// @}

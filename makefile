@@ -1,6 +1,7 @@
 CC=gcc
 LD=gcc
 CFLAGS=-Wall -Wextra -Werror -std=c99
+LDFLAGS= -lm
 
 SRC_DIR=src
 INC_DIR=inc
@@ -19,7 +20,7 @@ PROG = $(BIN_DIR)/$(PROG_NAME)
 all: $(PROG);
 
 $(PROG): $(OBJ_FILES) | $(BIN_DIR)
-	$(LD) -o $(PROG) $(OBJ_FILES)
+	$(LD) $(LDFLAGS) -o $(PROG) $(OBJ_FILES)
 
 doc: |$(DOC_DIR)
 	doxygen doxyfile
@@ -28,6 +29,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(foreach d,$(INC_DIR),-I$(d)) -MMD -c -o $@ $<
 
 $(OBJ_DIR) $(BIN_DIR) $(DOC_DIR):
-	-@mkdir -p $@
+	
 
 -include $(DEP_FILES)
