@@ -16,19 +16,28 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 SPDX-License-Identifier: MIT
 **********************************************************************************************************************/
 
+#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "nco.h"
 
 #define NSAMPLES 10000
 
-int main(void)
+int main(int argc, char **argv)
 {
-    Nco nco = Nco_create(3000, 30 * 17);
-    for (int i = 0; i < NSAMPLES; ++i) {
-        printf("%hd\t%hd\n", Nco_getReal(nco), Nco_getImag(nco));
-        Nco_tick(nco);
+    if (argc == 2 && !strcmp("getSamples", argv[1])) {
+        Nco nco = Nco_create(1, 100);
+        ComplexSample buf[100];
+        Nco_getSamples(nco, buf, 100);
+        for (int i = 0; i < 100; ++i)
+            printf("%hd\t%hd\n", buf[i].real, buf[i].imag);
+    } else {
+        Nco nco = Nco_create(30 * 17, 3000);
+        for (int i = 0; i < NSAMPLES; ++i) {
+            printf("%hd\t%hd\n", Nco_getReal(nco), Nco_getImag(nco));
+            Nco_tick(nco);
+        }
     }
     return 0;
 }
-
